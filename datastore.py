@@ -55,6 +55,8 @@ class domainLookup(object):
     NORM_PRE_WHOIS = '1996-01-01 00:00:00'
     DOMAIN_STATS_PATH = 'domain/registrar/creation_date/expiration_date'
 
+    CONFIG_SECTION = 'datastore'
+
     # Setup logging
     logger = logging.getLogger('domain_lookup')
     logger.setLevel(logging.DEBUG)
@@ -85,17 +87,17 @@ class domainLookup(object):
         self.first_connect = False
 
         if config is not None:
-            self.config = DomainStatsConfig(config_in=config)
+            self.config = configParser(config=config)
 
-            self.address = self.config.get(self.CONFIG_SECTION, 'address')
-            self.port = self.config.get(self.CONFIG_SECTION, 'port')
-            self.db = self.config.get(self.CONFIG_SECTION, 'db_name')
-            self.db_path = self.config.get(self.CONFIG_SECTION, 'db_path')
-            self.verbose = self.config.getbool(self.CONFIG_SECTION, 'verbose')
+            self.address = self.config.address
+            self.port = self.config.port
+            self.db = self.config.db
+            self.db_path = self.config.db_path
+            self.verbose = self.config.verbose
 
-            self.domain_stats_address = self.config.get('domain_stats', 'address')
-            self.domain_stats_port = self.config.get('domain_stats', 'port')
-            self.domain_stats_url = 'http://%s:%s' % (self.domain_stats_address, self.domain_stats_port)
+            self.domain_stats_address = self.config.domain_stats_address
+            self.domain_stats_port = self.config.domain_stats_port
+            self.domain_stats_url = self.config.domain_stats_url
 
         if self.db is not None:
             if self.db_path:
@@ -312,7 +314,7 @@ def main():
     config = None
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', '--config', required=False,
-                        help='Config with settings for datastore and domain_stats', default='config.ini')
+                        help='Config with settings for datastore and domain_stats', default='')
     parser.add_argument('-ip', '--address', required=False,
                         help='IP Address for the server to listen on.  Default is 127.0.0.1', default='127.0.0.1')
     parser.add_argument('-p', '--port', type=int, required=False, default=8001,
