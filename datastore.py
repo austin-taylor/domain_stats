@@ -55,6 +55,8 @@ class domainLookup(object):
     NORM_PRE_WHOIS = '1996-01-01 00:00:00'
     DOMAIN_STATS_PATH = 'domain/registrar/creation_date/expiration_date'
 
+    CONFIG_SECTION = 'datastore'
+
     # Setup logging
     logger = logging.getLogger('domain_lookup')
     logger.setLevel(logging.DEBUG)
@@ -84,18 +86,18 @@ class domainLookup(object):
         self.verbose = verbose
         self.first_connect = False
 
-        if config is not None:
-            self.config = DomainStatsConfig(config_in=config)
+        if config:
+            self.config = configParser(config=config)
 
-            self.address = self.config.get(self.CONFIG_SECTION, 'address')
-            self.port = self.config.get(self.CONFIG_SECTION, 'port')
-            self.db = self.config.get(self.CONFIG_SECTION, 'db_name')
-            self.db_path = self.config.get(self.CONFIG_SECTION, 'db_path')
-            self.verbose = self.config.getbool(self.CONFIG_SECTION, 'verbose')
+            self.address = self.config.address
+            self.port = self.config.port
+            self.db = self.config.db
+            self.db_path = self.config.db_path
+            self.verbose = self.config.verbose
 
-            self.domain_stats_address = self.config.get('domain_stats', 'address')
-            self.domain_stats_port = self.config.get('domain_stats', 'port')
-            self.domain_stats_url = 'http://%s:%s' % (self.domain_stats_address, self.domain_stats_port)
+            self.domain_stats_address = self.config.domain_stats_address
+            self.domain_stats_port = self.config.domain_stats_port
+            self.domain_stats_url = self.config.domain_stats_url
 
         if self.db is not None:
             if self.db_path:
@@ -312,7 +314,7 @@ def main():
     config = None
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', '--config', required=False,
-                        help='Config with settings for datastore and domain_stats', default='config.ini')
+                        help='Config with settings for datastore and domain_stats', default='')
     parser.add_argument('-ip', '--address', required=False,
                         help='IP Address for the server to listen on.  Default is 127.0.0.1', default='127.0.0.1')
     parser.add_argument('-p', '--port', type=int, required=False, default=8001,
@@ -321,22 +323,31 @@ def main():
                         help='Print verbose output to the server screen.  -vv is more verbose.')
     parser.add_argument('--store_results', action="store_true",
                         help="Stores results to a local database. Provides a significant performance improvement.")
+
     args = parser.parse_args()
 
     if args.config:
         config = configParser(config=args.config)
         address = config.address
         port = config.port
+        domain_stats_url = config.domain_stats_url
+        db_path = config.db_path
+        db = config.db
+        verbose = config.verbose
 
     else:
         address, port = args.address, args.port
+        domain_stats_url = 'http://%s:%s' % (address, port)
+        db_path = './'
+        db = 'domain_info.db'
+        verbose = args.verbose
 
     server = ThreadedDomainLookup((address, port), domain_api)
     server.config = config
-    server.domain_lookup = domainLookup(domain_stats_url=config.domain_stats_url,
-                                        db_path=config.db_path,
-                                        db=config.db,
-                                        verbose=config.verbose)
+    server.domain_lookup = domainLookup(domain_stats_url=domain_stats_url,
+                                        db_path=db_path,
+                                        db=db,
+                                        verbose=verbose)
     server.args = args
 
     server.safe_print('Server is Ready. http://%s:%s/cmd/[subcmd/,]target' % (address, port))
