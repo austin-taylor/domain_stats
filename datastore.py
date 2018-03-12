@@ -303,7 +303,7 @@ class ThreadedDomainLookup(SocketServer.ThreadingMixIn, SocketServer.TCPServer, 
     def safe_print(self, *args, **kwargs):
         try:
             self.screen_lock.acquire()
-            # print(*args, **kwargs)
+            self.safe_print(*args, **kwargs)
         finally:
             self.screen_lock.release()
 

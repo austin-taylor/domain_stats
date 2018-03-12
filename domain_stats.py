@@ -218,8 +218,6 @@ def main():
     while True:
         try:
             server.handle_request()
-            #if args.store_results:
-            #    domainLookup()
         except KeyboardInterrupt:
             break
 
