@@ -86,7 +86,7 @@ class domainLookup(object):
         self.verbose = verbose
         self.first_connect = False
 
-        if config is not None:
+        if config:
             self.config = configParser(config=config)
 
             self.address = self.config.address
@@ -323,22 +323,31 @@ def main():
                         help='Print verbose output to the server screen.  -vv is more verbose.')
     parser.add_argument('--store_results', action="store_true",
                         help="Stores results to a local database. Provides a significant performance improvement.")
+
     args = parser.parse_args()
 
     if args.config:
         config = configParser(config=args.config)
         address = config.address
         port = config.port
+        domain_stats_url = config.domain_stats_url
+        db_path = config.db_path
+        db = config.db
+        verbose = config.verbose
 
     else:
         address, port = args.address, args.port
+        domain_stats_url = 'http://%s:%s' % (address, port)
+        db_path = './'
+        db = 'domain_info.db'
+        verbose = args.verbose
 
     server = ThreadedDomainLookup((address, port), domain_api)
     server.config = config
-    server.domain_lookup = domainLookup(domain_stats_url=config.domain_stats_url,
-                                        db_path=config.db_path,
-                                        db=config.db,
-                                        verbose=config.verbose)
+    server.domain_lookup = domainLookup(domain_stats_url=domain_stats_url,
+                                        db_path=db_path,
+                                        db=db,
+                                        verbose=verbose)
     server.args = args
 
     server.safe_print('Server is Ready. http://%s:%s/cmd/[subcmd/,]target' % (address, port))
